@@ -19,6 +19,63 @@ typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
 typedef struct servent servent;
 
+typedef struct socketList{
+    sockaddr* listSockets;
+    int size;
+    int currentSize;
+}socketList;
+
+/*------------------------------------------------------*/
+socketList* initSocketList(int s){
+    socketList* structList = (socketList*) malloc(sizeof(socketList));
+    structList->size = s;
+    structList->currentSize = 0;
+
+    structList->listSockets = (sockaddr*) malloc(sizeof(sockaddr)*structList->size);
+
+    return structList;
+}
+
+// Fonction de recopie d'une liste de socket dans une autre 2 fois plus grande
+/*------------------------------------------------------*/
+socketList* recopySocketList(socketList* source){
+
+    socketList* copy = initSocketList(source->size*2);
+    unsigned int i;
+
+    if(source != NULL && copy != NULL && source->size < copy->size){
+        for(i = 0 ; i < source->size ; ++i){
+            copy->listSockets[i] = source->listSockets[i];
+            copy->currentSize++;
+        }
+        free(source);
+        return copy;
+    }
+
+    return NULL;
+}
+
+//Fonction d'ajout d'un coket dans une liste
+/*-------------------------------------------------------*/
+socketList* addSocketToList(socketList* list, sockaddr* socket){
+
+    socketList* listCopy;
+
+    // Si la liste est pleine, double l'espace mémoire de la liste avec recopie des éléments déjà stockés
+    if(list->currentSize >= list->size){
+        listCopy = recopySocketList(list);
+        listCopy->listSockets[listCopy->currentSize];
+        listCopy->currentSize++;
+
+        return listCopy;
+    }else{
+        list->listSockets[list->currentSize];
+        list->currentSize++;
+
+        return list;
+    }
+}
+
 /*------------------------------------------------------*/
 void renvoi (int sock) {
     char buffer[256];
@@ -46,7 +103,7 @@ void *traitementClient (void *socket_descriptor) {
      printf("reception d'un message.\n");
 	 printf("tid : %d \n",pthread_self());
 	 printf("bonjour \n");
- 	 printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
+ 	// printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
      renvoi( (int) socket_descriptor); 
      close( (int) socket_descriptor);
 
@@ -130,6 +187,8 @@ exit(1);
         exit(1);
         }
 		
+
+
 		 printf("Nous sommes avant le thread.\n");
 
 		 if( pthread_create( &monThread1, NULL ,  traitementClient ,(void *) nouv_socket_descriptor)){
