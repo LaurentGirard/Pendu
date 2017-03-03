@@ -14,6 +14,8 @@ Serveur à lancer avant le client
 
 #define TAILLE_MAX_NOM 256
 
+
+
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
@@ -24,6 +26,11 @@ typedef struct socketList{
     int size;
     int currentSize;
 }socketList;
+
+int NB_CLIENTS = 0;
+socketList* sockList;
+char message[254];
+
 
 /*------------------------------------------------------*/
 socketList* initSocketList(int s){
@@ -96,26 +103,70 @@ void renvoi (int sock) {
     printf("message envoye. \n");       
     return;
 }
-/*------------------------------------------------------*/
-void *traitementClient (void *socket_descriptor) {
-	 
-	 printf("Nous sommes dans le thread.\n");
-     printf("reception d'un message.\n");
-	 printf("tid : %d \n",pthread_self());
-	 printf("bonjour \n");
- 	// printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
- 	
- 	/* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
- 	   changer des variables globales pour lancer le jeu
- 	/* enterGame() */
- 	
- 	
-     renvoi( (int) socket_descriptor); 
-     close( (int) socket_descriptor);
+
+/*-----------------------------------------------------*/
+void sendMessage(char message[256], int sock){
+
+    int longueur;
+    printf("pute?");
+    if ((longueur = read(sock, message, sizeof(message))) <= 0) 
+        return;
+
+    /* mise en attente du programme pour simuler un delai de transmission */
+    sleep(3);
+    write(sock,message,strlen(message)+1);    
+    printf("message envoyé! \n");       
+    return;
+}
+
+
+/*-----------------------------------------------------*/
+void startGame() {
+
 
 
 }
+
+
+
+
+/*-----------------------------------------------------*/
+void enterGame() {
+
+
+
+
+}
+
+
 /*------------------------------------------------------*/
+void *traitementClient (void *socket_descriptor) {
+     
+    // printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
+    
+    printf("bijour?");
+    addSocketToList(sockList, (int) socket_descriptor);
+
+    /* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
+       changer des variables globales pour lancer le jeu
+    /* enterGame() */
+    enterGame();
+
+    char *message;
+    message = "coucou";
+    
+    printf("bijour?");
+
+    sendMessage( message, (int) socket_descriptor); 
+    close( (int) socket_descriptor);
+
+
+}
+
+
+
+
+/*-------------------- MAIN ----------------------------------*/
 main(int argc, char **argv) {
     int socket_descriptor, 
 /* descripteur de socket */
@@ -179,18 +230,17 @@ exit(1);
             perror("erreur : impossible de lier la socket a l'adresse de connexion.");
             exit(1);
         }
+    
     /* initialisation de la file d'ecoute */
         listen(socket_descriptor,5);
     /* attente des connexions et traitement des donnees recues */
-    
-    
+  
     /*----------------------------------------------------*/
     // On initialise la SocketList
     
-    
-    /*TODO : Essayer d'incrémenter la liste des sockets dnas les threads clients*/
-    socketList* sockList = initSocketList(2);
-    int newSocketDescriptor, newSocketDescriptor2, newSocketDescriptor3;
+    sockList = initSocketList(4);
+   
+    /*int newSocketDescriptor, newSocketDescriptor2, newSocketDescriptor3;
     newSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     newSocketDescriptor2 = socket(AF_INET, SOCK_STREAM, 0);
     newSocketDescriptor3 = socket(AF_INET, SOCK_STREAM, 0);
@@ -198,46 +248,50 @@ exit(1);
     
     sockList = addSocketToList(sockList, newSocketDescriptor2);
      sockList = addSocketToList(sockList, newSocketDescriptor3);
-    printf("BONJOUR PRINTF. \n");
+    
     printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[0]);
     printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[1]);
-    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[2]);
+    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[2]);*/
     
-    
-
-		
+        
     
     
 
     for(;;) {
         longueur_adresse_courante = sizeof(adresse_client_courant);
-    /* adresse_client_courant sera renseignée par accept via les infos du connect */
-        if ((nouv_socket_descriptor = accept(socket_descriptor, 
-            (sockaddr*)(&adresse_client_courant),
-            &longueur_adresse_courante))< 0) {
-            perror("erreur : impossible d'accepter la connexion avec le client.");
-        exit(1);
+      
+
+        if (NB_CLIENTS == 4) {
+            printf("Il y a déjà une partie en cours, veuillez essayer un peu plus tard. \n");
+            exit(1);
         }
+     
+        /* adresse_client_courant sera renseignée par accept via les infos du connect */
+           if ((nouv_socket_descriptor = accept(socket_descriptor, 
+               (sockaddr*)(&adresse_client_courant),
+               &longueur_adresse_courante))< 0) {
+               perror("erreur : impossible d'accepter la connexion avec le client.");
+               exit(1);
+           }  
+
+          //création du thread pour le nouveau client
+            if( pthread_create( &monThread1, NULL , traitementClient , (void *) nouv_socket_descriptor)){
+                perror("could not create thread");
+                return 1;
+            }
+
+            NB_CLIENTS += 1;
+            printf("NB_CLIENTS = %d \n", NB_CLIENTS);
+            //TODO : c'est vgraiment chelou
+            printf("Il y %d sur 4 joueurs de connectés.", NB_CLIENTS);
+
+            if (NB_CLIENTS == 4) {
+
+            printf("start game");
+  
+             /*lancer la partie quand tout les clients sont arrivés.*/
+                startGame();
+            }
         
-   
-		
-
-
-		 printf("Nous sommes avant le thread.\n");
-
-		 if( pthread_create( &monThread1, NULL ,  traitementClient ,(void *) nouv_socket_descriptor)){
-            perror("could not create thread");
-            return 1;
-        }
-
-		/*lancer la partie quand tout les clients sont arrivés.
-		/* startGame();
-		
-		
-
-        /* traitement du message 
-        printf("reception d'un message.\n");
-        renvoi(nouv_socket_descriptor); // TO DO : crééer une méthode avec renvoi + close sur un socket pour la creation d'un thread
-        close(nouv_socket_descriptor);*/
     }    
 }

@@ -71,7 +71,7 @@ exit(1);
     }
     /* tentative de connexion au serveur dont les infos sont dans adresse_locale */
     if ((connect(socket_descriptor, (sockaddr*)(&adresse_locale), sizeof(adresse_locale))) < 0) {
-        perror("erreur : impossible de se connecter au serveur.");
+        perror("erreur : impossible de se connecter au serveur. BLEU");
         exit(1);
     }
     printf("connexion etablie avec le serveur. \n");
