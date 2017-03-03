@@ -20,7 +20,7 @@ typedef struct hostent hostent;
 typedef struct servent servent;
 
 typedef struct socketList{
-    sockaddr* listSockets;
+    int* listSocketsDescriptor;
     int size;
     int currentSize;
 }socketList;
@@ -31,7 +31,7 @@ socketList* initSocketList(int s){
     structList->size = s;
     structList->currentSize = 0;
 
-    structList->listSockets = (sockaddr*) malloc(sizeof(sockaddr)*structList->size);
+    structList->listSocketsDescriptor = (int*) malloc(sizeof(int)*structList->size);
 
     return structList;
 }
@@ -45,7 +45,7 @@ socketList* recopySocketList(socketList* source){
 
     if(source != NULL && copy != NULL && source->size < copy->size){
         for(i = 0 ; i < source->size ; ++i){
-            copy->listSockets[i] = source->listSockets[i];
+            copy->listSocketsDescriptor[i] = source->listSocketsDescriptor[i];
             copy->currentSize++;
         }
         free(source);
@@ -57,19 +57,19 @@ socketList* recopySocketList(socketList* source){
 
 //Fonction d'ajout d'un coket dans une liste
 /*-------------------------------------------------------*/
-socketList* addSocketToList(socketList* list, sockaddr* socket){
+socketList* addSocketToList(socketList* list, int socket_descriptor){
 
     socketList* listCopy;
 
     // Si la liste est pleine, double l'espace mémoire de la liste avec recopie des éléments déjà stockés
     if(list->currentSize >= list->size){
         listCopy = recopySocketList(list);
-        listCopy->listSockets[listCopy->currentSize];
+        listCopy->listSocketsDescriptor[listCopy->currentSize];
         listCopy->currentSize++;
 
         return listCopy;
     }else{
-        list->listSockets[list->currentSize];
+        list->listSocketsDescriptor[list->currentSize];
         list->currentSize++;
 
         return list;
@@ -104,6 +104,12 @@ void *traitementClient (void *socket_descriptor) {
 	 printf("tid : %d \n",pthread_self());
 	 printf("bonjour \n");
  	// printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
+ 	
+ 	/* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
+ 	   changer des variables globales pour lancer le jeu
+ 	/* enterGame() */
+ 	
+ 	
      renvoi( (int) socket_descriptor); 
      close( (int) socket_descriptor);
 
@@ -176,6 +182,32 @@ exit(1);
     /* initialisation de la file d'ecoute */
         listen(socket_descriptor,5);
     /* attente des connexions et traitement des donnees recues */
+    
+    
+    /*----------------------------------------------------*/
+    // On initialise la SocketList
+    
+    
+    /*TODO : Essayer d'incrémenter la liste des sockets dnas les threads clients*/
+    socketList* sockList = initSocketList(2);
+    int newSocketDescriptor, newSocketDescriptor2, newSocketDescriptor3;
+    newSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    newSocketDescriptor2 = socket(AF_INET, SOCK_STREAM, 0);
+    newSocketDescriptor3 = socket(AF_INET, SOCK_STREAM, 0);
+    sockList = addSocketToList(sockList, newSocketDescriptor);
+    
+    sockList = addSocketToList(sockList, newSocketDescriptor2);
+     sockList = addSocketToList(sockList, newSocketDescriptor3);
+    printf("BONJOUR PRINTF. \n");
+    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[0]);
+    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[1]);
+    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[2]);
+    
+    
+
+		
+    
+    
 
     for(;;) {
         longueur_adresse_courante = sizeof(adresse_client_courant);
@@ -186,6 +218,8 @@ exit(1);
             perror("erreur : impossible d'accepter la connexion avec le client.");
         exit(1);
         }
+        
+   
 		
 
 
@@ -195,6 +229,10 @@ exit(1);
             perror("could not create thread");
             return 1;
         }
+
+		/*lancer la partie quand tout les clients sont arrivés.
+		/* startGame();
+		
 		
 
         /* traitement du message 
