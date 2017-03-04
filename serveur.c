@@ -107,14 +107,17 @@ void renvoi (int sock) {
 /*-----------------------------------------------------*/
 void sendMessage(char message[256], int sock){
 
+    char cheval[256];
     int longueur;
-    printf("pute?");
-    if ((longueur = read(sock, message, sizeof(message))) <= 0) 
-        return;
+    unsigned int i = 0;
 
-    /* mise en attente du programme pour simuler un delai de transmission */
-    sleep(3);
-    write(sock,message,strlen(message)+1);    
+    longueur = sizeof(message);
+
+    for (i; i < longueur;i++){
+        cheval[i] = message[i];
+    }
+
+    write(sock,cheval,strlen(cheval)+1);    
     printf("message envoyé! \n");       
     return;
 }
@@ -144,18 +147,17 @@ void *traitementClient (void *socket_descriptor) {
      
     // printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
     
-    printf("bijour?");
     addSocketToList(sockList, (int) socket_descriptor);
 
     /* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
        changer des variables globales pour lancer le jeu
-    /* enterGame() */
-    enterGame();
+    */
+    //enterGame();
 
     char *message;
     message = "coucou";
     
-    printf("bijour?");
+    //renvoi ( (int) socket_descriptor);
 
     sendMessage( message, (int) socket_descriptor); 
     close( (int) socket_descriptor);
