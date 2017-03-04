@@ -184,7 +184,9 @@ void *traitementClient (void *socket_descriptor) {
     int longueur;
     char *buffer;
     char *message;
-    //message = "Bienvenue dans la partie ! \n";
+    message = "0Bienvenue dans la partie ! \n";
+    sendMessage( message, (int) socket_descriptor); 
+
     message = "1ça va bien? \n";
     printf("message[0] = %d \n", message[0]);
     sendMessage( message, (int) socket_descriptor); 
