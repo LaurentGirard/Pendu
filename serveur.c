@@ -3,6 +3,7 @@ Serveur à lancer avant le client
 ------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <linux/types.h> 
 /* pour les sockets */
 #include <sys/socket.h>
@@ -111,8 +112,8 @@ void sendMessage(char message[256], int sock){
     int longueur;
     unsigned int i = 0;
 
-    longueur = sizeof(message);
-
+    longueur = strlen(message);
+    
     for (i; i < longueur;i++){
         cheval[i] = message[i];
     }
@@ -124,8 +125,15 @@ void sendMessage(char message[256], int sock){
 
 
 /*-----------------------------------------------------*/
-void startGame() {
+void *startGame() {
 
+    int joueurCourant = 0;
+    char mot[256] = "cheval";
+    int longueurMot = strlen(mot);
+
+    for (;;) {
+
+    }
 
 
 }
@@ -142,27 +150,66 @@ void enterGame() {
 }
 
 
+
+
+
+/*-----------------------------------------------------*/
+/*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
+void * receiveMessage(void * socket) {
+ int sockfd, ret;
+ char buffer[256]; 
+ sockfd = (int) socket;
+ memset(buffer, 0, 256);  
+ 
+
+  printf("kakakakakakk \n");
+  ret = recvfrom(sockfd, buffer, 256, 0, NULL, NULL);  
+  if (ret < 0) {  
+   printf("Error receiving data!\n");    
+  } else {
+   printf("client: ");
+   fputs(buffer, stdout);
+   printf("\n");
+  }
+ 
+}
+
+
 /*------------------------------------------------------*/
 void *traitementClient (void *socket_descriptor) {
      
     // printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
     
     addSocketToList(sockList, (int) socket_descriptor);
+    int longueur;
+    char *buffer;
+    char *message;
+    //message = "Bienvenue dans la partie ! \n";
+    message = "1ça va bien? \n";
+    printf("message[0] = %d \n", message[0]);
+    sendMessage( message, (int) socket_descriptor); 
 
-    /* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
+
+    /* création d'un thread pour réceptionner la réponse */
+    pthread_t rThread;
+    int ret;
+     ret = pthread_create(&rThread, NULL, receiveMessage, (void *) socket_descriptor);
+     if (ret) {
+     printf("ERROR: Return Code from pthread_create() is %d\n", ret);
+     exit(1);
+    }
+
+
+
+    printf("hahahahah \n");
+    /*
+    }*/
+     /* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
        changer des variables globales pour lancer le jeu
     */
     //enterGame();
 
-    char *message;
-    message = "coucou";
-    
-    //renvoi ( (int) socket_descriptor);
-
-    sendMessage( message, (int) socket_descriptor); 
-    close( (int) socket_descriptor);
-
-
+    //close( (int) socket_descriptor);
 }
 
 
@@ -240,41 +287,27 @@ exit(1);
     /*----------------------------------------------------*/
     // On initialise la SocketList
     
-    sockList = initSocketList(4);
-   
-    /*int newSocketDescriptor, newSocketDescriptor2, newSocketDescriptor3;
-    newSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-    newSocketDescriptor2 = socket(AF_INET, SOCK_STREAM, 0);
-    newSocketDescriptor3 = socket(AF_INET, SOCK_STREAM, 0);
-    sockList = addSocketToList(sockList, newSocketDescriptor);
-    
-    sockList = addSocketToList(sockList, newSocketDescriptor2);
-     sockList = addSocketToList(sockList, newSocketDescriptor3);
-    
-    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[0]);
-    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[1]);
-    printf("socket descriptor : %d \n",sockList->listSocketsDescriptor[2]);*/
-    
-        
-    
+    sockList = initSocketList(4);  
     
 
     for(;;) {
-        longueur_adresse_courante = sizeof(adresse_client_courant);
-      
 
-        if (NB_CLIENTS == 4) {
-            printf("Il y a déjà une partie en cours, veuillez essayer un peu plus tard. \n");
-            exit(1);
-        }
-     
-        /* adresse_client_courant sera renseignée par accept via les infos du connect */
+        longueur_adresse_courante = sizeof(adresse_client_courant);      
+
+         /* adresse_client_courant sera renseignée par accept via les infos du connect */
            if ((nouv_socket_descriptor = accept(socket_descriptor, 
                (sockaddr*)(&adresse_client_courant),
                &longueur_adresse_courante))< 0) {
                perror("erreur : impossible d'accepter la connexion avec le client.");
                exit(1);
            }  
+
+        /*Si la partie est pleine, on envoie un message au client*/
+        if (NB_CLIENTS == 4) {
+            char gameFull[256] = "Il y a déjà une partie en cours, veuillez essayer un peu plus tard. \n";
+            sendMessage(gameFull, nouv_socket_descriptor);
+            close(nouv_socket_descriptor);
+        } else {
 
           //création du thread pour le nouveau client
             if( pthread_create( &monThread1, NULL , traitementClient , (void *) nouv_socket_descriptor)){
@@ -285,15 +318,21 @@ exit(1);
             NB_CLIENTS += 1;
             printf("NB_CLIENTS = %d \n", NB_CLIENTS);
             //TODO : c'est vgraiment chelou
-            printf("Il y %d sur 4 joueurs de connectés.", NB_CLIENTS);
+            printf("Il y %d sur 4 joueurs de connectés.\n", NB_CLIENTS);
 
             if (NB_CLIENTS == 4) {
 
-            printf("start game");
+            printf("start game \n");
   
              /*lancer la partie quand tout les clients sont arrivés.*/
-                startGame();
+            //création du thread pour la nouvelle partie
+              if( pthread_create( &monThread1, NULL , startGame, NULL)){
+                   perror("could not create startgame thread");
+                   return 1;
+                }
+
+
             }
-        
+        }
     }    
 }

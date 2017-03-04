@@ -13,6 +13,24 @@ typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
 typedef struct servent servent;
 
+
+/*-------------------------------------------------------------------------*/
+char *enlevePremierChar(char chaine[256]){
+
+    char *copy; 
+    int longueur = strlen(chaine);
+    unsigned int i = 1;
+
+    for (i; i < longueur; i++ ) {
+        copy[i-1]=chaine[i];
+    } 
+
+    return copy;
+}
+
+
+
+
 int main(int argc, char **argv) {
     int socket_descriptor, 
 /* descripteur de socket */
@@ -77,18 +95,55 @@ exit(1);
     printf("connexion etablie avec le serveur. \n");
     printf("envoi d'un message au serveur. \n");
     /* envoi du message vers le serveur */
-    if ((write(socket_descriptor, mesg, strlen(mesg))) < 0) {
+   /* if ((write(socket_descriptor, mesg, strlen(mesg))) < 0) {
         perror("erreur : impossible d'ecrire le message destine au serveur.");
         exit(1);
     }
-    /* mise en attente du prgramme pour simuler un delai de transmission */
+    /* mise en attente du prgramme pour simuler un delai de transmission 
     sleep(3);
-    printf("message envoye au serveur. \n");
+    printf("message envoye au serveur. \n");*/
+
+
     /* lecture de la reponse en provenance du serveur */
     while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-        printf("reponse du serveur : \n");
-        write(1,buffer,longueur);
+        printf("réponse du serveur : \n");
+
+        /* message simple à afficher */
+        if ( buffer[0] == 48){
+
+            printf("C'est un message à afficher alors je vais l'afficher maintenant. \n");
+            char *copy;
+            copy = enlevePremierChar(buffer);
+
+            write(1,copy,longueur);
+        }
+
+        /* le serveur nous pose une question */
+        if ( buffer[0] == 49){
+
+            printf(" serveur : ");
+            write(1,buffer,longueur);
+            printf("votre réponse ? \n");
+            char strvar[256];
+            fgets (strvar, 256, stdin);
+
+            
+            if ((write(socket_descriptor, strvar, sizeof(strvar))) < 0) {
+                perror("erreur : impossible d'ecrire le message destine au serveur.");
+                exit(1);
+            } else {
+                printf("message envoyé!");
+            }
+
+
+        }
+
+        printf("bijour. \n");
+        //write(1,buffer,longueur);
     }
+
+
+
     printf("\nfin de la reception.\n");
     close(socket_descriptor);
     printf("connexion avec le serveur fermee, fin du programme.\n");
