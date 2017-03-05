@@ -108,18 +108,42 @@ void renvoi (int sock) {
 /*-----------------------------------------------------*/
 void sendMessage(char message[256], int sock){
 
-    char cheval[256];
+    char copy[256];
     int longueur;
     unsigned int i = 0;
 
     longueur = strlen(message);
     
     for (i; i < longueur;i++){
-        cheval[i] = message[i];
+        copy[i] = message[i];
     }
 
-    write(sock,cheval,strlen(cheval)+1);    
+    write(sock,copy,strlen(copy)+1);    
     printf("message envoyé! \n");       
+    return;
+}
+
+/*-----------------------------------------------------*/
+void sendMessageAll(char message[256]){
+
+    char copy[256];
+    int longueur;
+    unsigned int i = 0;
+
+    longueur = strlen(message);
+    
+    for (i; i < longueur;i++){
+        copy[i] = message[i];
+    }
+
+    printf("socket descriptor = %d", sockList->listSocketsDescriptor[0]);
+
+    write(sockList->listSocketsDescriptor[0],copy,strlen(copy)+1);
+    write(sockList->listSocketsDescriptor[1],copy,strlen(copy)+1);
+    write(sockList->listSocketsDescriptor[2],copy,strlen(copy)+1);
+    write(sockList->listSocketsDescriptor[3],copy,strlen(copy)+1);
+
+    printf("message envoyé à tout le monde ! \n");       
     return;
 }
 
@@ -130,11 +154,10 @@ void *startGame() {
     int joueurCourant = 0;
     char mot[256] = "cheval";
     int longueurMot = strlen(mot);
-
-    for (;;) {
-
-    }
-
+    char *message;
+    message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer.";
+    sendMessageAll(message);
+    printf("kekekekekek ?");
 
 }
 
@@ -170,6 +193,10 @@ void * receiveMessage(void * socket) {
    printf("client: ");
    fputs(buffer, stdout);
    printf("\n");
+   char *message;
+   message = "0C'est génial :D";
+   sendMessage(message, (int) socket);
+   close ((int ) socket);
   }
  
 }
@@ -182,28 +209,27 @@ void *traitementClient (void *socket_descriptor) {
     
     addSocketToList(sockList, (int) socket_descriptor);
     int longueur;
-    char *buffer;
-    char *message;
-    message = "0Bienvenue dans la partie ! \n";
+    char *message, *message2;
+    message = "0Bienvenue dans la partie ! \n\0";
     sendMessage( message, (int) socket_descriptor); 
 
-    message = "1ça va bien? \n";
-    printf("message[0] = %d \n", message[0]);
-    sendMessage( message, (int) socket_descriptor); 
+    message2 = "0ça va bien? \n\0";
+   // printf("message[0] = %d \n", message[0]);
+    sendMessage( message2, (int) socket_descriptor); 
 
 
-    /* création d'un thread pour réceptionner la réponse */
+    /* création d'un thread pour réceptionner la réponse 
     pthread_t rThread;
     int ret;
      ret = pthread_create(&rThread, NULL, receiveMessage, (void *) socket_descriptor);
      if (ret) {
      printf("ERROR: Return Code from pthread_create() is %d\n", ret);
      exit(1);
-    }
+    }*/
 
 
 
-    printf("hahahahah \n");
+    //printf("hahahahah \n");
     /*
     }*/
      /* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 

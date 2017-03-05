@@ -17,17 +17,33 @@ typedef struct servent servent;
 /*-------------------------------------------------------------------------*/
 char *enlevePremierChar(char chaine[256]){
 
-    char *copy; 
+    char *copy;
     int longueur = strlen(chaine);
     unsigned int i = 1;
-
-    for (i; i < longueur; i++ ) {
+    for (i; i < longueur ; i++ ) {
         copy[i-1]=chaine[i];
-    } 
+    }
 
     return copy;
 }
 
+/*--------------------------------------------------------------------------
+void * receiveMessage(void * socket) {
+ int sockfd, ret;
+ char buffer[BUF_SIZE]; 
+ sockfd = (int) socket;
+ memset(buffer, 0, BUF_SIZE);  
+ for (;;) {
+  ret = recvfrom(sockfd, buffer, BUF_SIZE, 0, NULL, NULL);  
+  if (ret < 0) {  
+   printf("Error receiving data!\n");    
+  } else {
+   printf("server: ");
+   fputs(buffer, stdout);
+   //printf("\n");
+  }  
+ }
+}*/
 
 
 
@@ -105,17 +121,21 @@ exit(1);
 
 
     /* lecture de la reponse en provenance du serveur */
-    while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-        printf("réponse du serveur : \n");
+    //while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+    while ((longueur = recvfrom(socket_descriptor, buffer, 256, 0, NULL, NULL) > 0 )) {
 
         /* message simple à afficher */
         if ( buffer[0] == 48){
 
-            printf("C'est un message à afficher alors je vais l'afficher maintenant. \n");
+            printf("C'est un message (à afficher alors je vais l'afficher maintenant. \n");
+            //char *copy = (char*) malloc (sizeof(char)*256);
             char *copy;
             copy = enlevePremierChar(buffer);
-
+            
+            printf("longueur = %d \n", longueur);
+            printf("copy = %s \n", copy);
             write(1,copy,longueur);
+           // free(copy);
         }
 
         /* le serveur nous pose une question */
@@ -138,8 +158,7 @@ exit(1);
 
         }
 
-        printf("bijour. \n");
-        //write(1,buffer,longueur);
+        
     }
 
 
