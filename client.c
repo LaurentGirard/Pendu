@@ -76,17 +76,17 @@ int main(int argc, char **argv) {
 /* nom de la machine distante */
     char *mesg; 
 /* message envoyé */
-    if (argc != 3) {
+    if (argc != 2) {
         perror("usage : client <adresse-serveur> <message-a-transmettre>");
         exit(1);
     }
 
     prog = argv[0];
     host = argv[1];
-    mesg = argv[2];
-    printf("nom de l'executable : %s \n", prog);
+    //mesg = argv[2];
+    printf("nom de l'executable DD: %s \n", prog);
     printf("adresse du serveur  : %s \n", host);
-    printf("message envoye      : %s \n", mesg);
+    //printf("message envoye      : %s \n", mesg);
     if ((ptr_host = gethostbyname(host)) == NULL) {
         perror("erreur : impossible de trouver le serveur a partir de son adresse.");
         exit(1);
@@ -157,7 +157,11 @@ exit(1);
         if ( buffer[0] == 49){
 
             printf(" serveur : ");
-            write(1,buffer,longueur);
+            char *copy;
+            copy = enlevePremierChar(buffer);
+            longueur = strlen(copy);
+            write(1,copy,longueur);
+            sleep(2);
             printf("votre réponse ? \n");
             char strvar[256];
             fgets (strvar, 256, stdin);

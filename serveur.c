@@ -29,6 +29,7 @@ typedef struct socketList{
 }socketList;
 
 int NB_CLIENTS = 0;
+int JoueurCourant = 0;
 socketList* sockList;
 char message[254];
 
@@ -63,7 +64,7 @@ socketList* recopySocketList(socketList* source){
     return NULL;
 }
 
-//Fonction d'ajout d'un coket dans une liste
+//Fonction d'ajout d'un socket dans une liste
 /*-------------------------------------------------------*/
 socketList* addSocketToList(socketList* list, int socket_descriptor){
 
@@ -72,12 +73,12 @@ socketList* addSocketToList(socketList* list, int socket_descriptor){
     // Si la liste est pleine, double l'espace mémoire de la liste avec recopie des éléments déjà stockés
     if(list->currentSize >= list->size){
         listCopy = recopySocketList(list);
-        listCopy->listSocketsDescriptor[listCopy->currentSize];
+        listCopy->listSocketsDescriptor[listCopy->currentSize] = socket_descriptor;
         listCopy->currentSize++;
 
         return listCopy;
     }else{
-        list->listSocketsDescriptor[list->currentSize];
+        list->listSocketsDescriptor[list->currentSize] = socket_descriptor;
         list->currentSize++;
 
         return list;
@@ -104,6 +105,46 @@ void renvoi (int sock) {
     printf("message envoye. \n");       
     return;
 }
+
+/*------------------------------------------------------*/
+/*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
+char* receiveMessage(int socket) {
+ int sockfd, ret;
+ char buffer[256]; 
+ char *copy = (char*) malloc (sizeof(char)*256);
+ sockfd = (int) socket;
+ memset(buffer, 0, 256);  
+ 
+
+  ret = recvfrom(sockfd, buffer, 256, 0, NULL, NULL);  
+  if (ret < 0) {  
+   printf("Error receiving data!\n");    
+  } else {
+   printf("client: ");
+   fputs(buffer, stdout);
+   printf("\n");
+   copy = strcpy(copy, buffer);
+   return copy;
+   }
+ 
+}
+
+/*------------------------------------------------------*/
+char* askClient (int sock) {
+
+    char *message = (char*) malloc (sizeof(char)*256);
+    char *rep = (char*) malloc (sizeof(char)*256);
+    message = "1C'est à vous de jouer, que proposez vous ?. \n$";
+    sendMessage(message, sock);
+
+    rep  = receiveMessage(sock);
+    printf("réponse again = %s", rep);
+    return rep;
+}
+
+
+
+
 
 /*-----------------------------------------------------*/
 void sendMessage(char message[256], int sock){
@@ -136,12 +177,12 @@ void sendMessageAll(char message[256]){
         copy[i] = message[i];
     }
 
-    printf("socket descriptor = %d", sockList->listSocketsDescriptor[0]);
 
-    write(sockList->listSocketsDescriptor[0],copy,strlen(copy)+1);
-    write(sockList->listSocketsDescriptor[1],copy,strlen(copy)+1);
-    write(sockList->listSocketsDescriptor[2],copy,strlen(copy)+1);
-    write(sockList->listSocketsDescriptor[3],copy,strlen(copy)+1);
+
+    sendMessage(copy,sockList->listSocketsDescriptor[0] );
+    sendMessage(copy,sockList->listSocketsDescriptor[1] );
+    sendMessage(copy,sockList->listSocketsDescriptor[2] );
+    sendMessage(copy,sockList->listSocketsDescriptor[3] );
 
     printf("message envoyé à tout le monde ! \n");       
     return;
@@ -155,9 +196,14 @@ void *startGame() {
     char mot[256] = "cheval";
     int longueurMot = strlen(mot);
     char *message;
-    message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer.";
+    message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer. \n$";
     sendMessageAll(message);
-    printf("kekekekekek ?");
+
+
+
+
+
+
 
 }
 
@@ -178,14 +224,13 @@ void enterGame() {
 
 /*-----------------------------------------------------*/
 /*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
-void * receiveMessage(void * socket) {
+void * receiveMessageThread(void * socket) {
  int sockfd, ret;
  char buffer[256]; 
  sockfd = (int) socket;
  memset(buffer, 0, 256);  
  
 
-  printf("kakakakakakk \n");
   ret = recvfrom(sockfd, buffer, 256, 0, NULL, NULL);  
   if (ret < 0) {  
    printf("Error receiving data!\n");    
@@ -201,13 +246,17 @@ void * receiveMessage(void * socket) {
  
 }
 
+/*-----------------------------------------------------*/
+
+
 
 /*------------------------------------------------------*/
 void *traitementClient (void *socket_descriptor) {
      
     // printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
     
-    addSocketToList(sockList, (int) socket_descriptor);
+    sockList = addSocketToList(sockList, (int) socket_descriptor);
+
     int longueur;
     char *message, *message2;
     message = "0Bienvenue dans la partie ! \n$";
@@ -217,6 +266,11 @@ void *traitementClient (void *socket_descriptor) {
    // printf("message[0] = %d \n", message[0]);
     sendMessage( message2, (int) socket_descriptor); 
 
+
+    char *rep = (char*) malloc (sizeof(char)*256);
+    sleep(3);
+    rep = askClient(socket_descriptor);
+    printf("REPONSE CLIENT = %s \n", rep);
 
     /* création d'un thread pour réceptionner la réponse 
     pthread_t rThread;
