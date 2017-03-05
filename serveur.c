@@ -210,10 +210,10 @@ void *traitementClient (void *socket_descriptor) {
     addSocketToList(sockList, (int) socket_descriptor);
     int longueur;
     char *message, *message2;
-    message = "0Bienvenue dans la partie ! \n\0";
+    message = "0Bienvenue dans la partie ! \n$";
     sendMessage( message, (int) socket_descriptor); 
-
-    message2 = "0ça va bien? \n\0";
+    sleep(3);
+    message2 = "0ça va bien? \n$";
    // printf("message[0] = %d \n", message[0]);
     sendMessage( message2, (int) socket_descriptor); 
 
