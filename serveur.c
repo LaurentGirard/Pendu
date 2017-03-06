@@ -12,6 +12,7 @@ Serveur à lancer avant le client
 #include <string.h> 
 /* pour bcopy, ... */ 
 #include <pthread.h> // for threading, link with lpthread
+#include <time.h> //For random int
 
 #define TAILLE_MAX_NOM 256
 
@@ -29,10 +30,45 @@ typedef struct socketList{
 }socketList;
 
 int NB_CLIENTS = 0;
-int JoueurCourant = 0;
+int joueurCourant = 0;
+int endgame = 1;
+int nbErrors = 0;
 socketList* sockList;
-char message[254];
+char *mot;
+char *motCourant;
 
+char **dictionnaire;
+
+/*-----------------------------------------------------*/
+void initDico(){
+    
+    dictionnaire = (char**) malloc (sizeof(char*)*20);
+    unsigned int i;
+    for(i = 0; i < 20 ; ++i){
+        dictionnaire[i] = (char*) malloc(sizeof(char)*256);
+    }
+
+    dictionnaire[0] = "souris";
+    dictionnaire[1] = "chat";
+    dictionnaire[2] = "brouette";
+    dictionnaire[3] = "rideau";
+    dictionnaire[4] = "caillou";
+    dictionnaire[5] = "tractopelle";
+    dictionnaire[6] = "cheval";
+    dictionnaire[7] = "ordinateur";
+    dictionnaire[8] = "pont";
+    dictionnaire[9] = "camion";
+    dictionnaire[10] = "moniteur";
+    dictionnaire[11] = "rhododendron";
+    dictionnaire[12] = "tulipe";
+    dictionnaire[13] = "chaise";
+    dictionnaire[14] = "conscience";
+    dictionnaire[15] = "anatomie";
+    dictionnaire[16] = "saxophone";
+    dictionnaire[17] = "bonjour";
+    dictionnaire[18] = "enfer";
+    dictionnaire[19] = "conjugaison";
+}
 
 /*------------------------------------------------------*/
 socketList* initSocketList(int s){
@@ -44,6 +80,7 @@ socketList* initSocketList(int s){
 
     return structList;
 }
+
 
 // Fonction de recopie d'une liste de socket dans une autre 2 fois plus grande
 /*------------------------------------------------------*/
@@ -63,6 +100,7 @@ socketList* recopySocketList(socketList* source){
 
     return NULL;
 }
+
 
 //Fonction d'ajout d'un socket dans une liste
 /*-------------------------------------------------------*/
@@ -134,11 +172,10 @@ char* askClient (int sock) {
 
     char *message = (char*) malloc (sizeof(char)*256);
     char *rep = (char*) malloc (sizeof(char)*256);
-    message = "1C'est à vous de jouer, que proposez vous ?. \n$";
+    message = "1\nC'est à vous de jouer, que proposez vous ?. \n";
     sendMessage(message, sock);
 
     rep  = receiveMessage(sock);
-    printf("réponse again = %s", rep);
     return rep;
 }
 
@@ -147,9 +184,9 @@ char* askClient (int sock) {
 
 
 /*-----------------------------------------------------*/
-void sendMessage(char message[256], int sock){
+void sendMessage(char *message, int sock){
 
-    char copy[256];
+    char *copy = (char*) malloc (sizeof(char)*256);;
     int longueur;
     unsigned int i = 0;
 
@@ -165,9 +202,9 @@ void sendMessage(char message[256], int sock){
 }
 
 /*-----------------------------------------------------*/
-void sendMessageAll(char message[256]){
+void sendMessageAll(char *message){
 
-    char copy[256];
+    char *copy = (char*) malloc (sizeof(char)*256);
     int longueur;
     unsigned int i = 0;
 
@@ -188,35 +225,280 @@ void sendMessageAll(char message[256]){
     return;
 }
 
+/*------------------------------------------------------*/
+void nextPlayer(){
+    
+   switch(joueurCourant) {
+
+    case 0 :
+      joueurCourant++;
+      break; /* optional */
+
+    case 1 :
+      joueurCourant++;
+      break; /* optional */
+
+    case 2 :
+      joueurCourant++;
+      break; /* optional */
+
+    case 3 :
+      joueurCourant = 0;
+      break; /* optional *
+  
+   /* you can have any number of case statements */
+    default : /* Optional */
+        printf("Error in nextPlayer");
+    }
+
+}
+
+
+/*-------------------------------------------------------*/
+void endGame() {
+
+    close (sockList->listSocketsDescriptor[0]);
+    close (sockList->listSocketsDescriptor[1]);
+    close (sockList->listSocketsDescriptor[2]);
+    close (sockList->listSocketsDescriptor[3]);
+    NB_CLIENTS = 0;
+    joueurCourant = 0;
+    endgame = 1;
+    nbErrors = 0;
+    sockList->currentSize = 0;
+
+
+}
+
+/*--------------------------------------------------------*/
+// renvoie 0 si le motCourant est inchangé sinon, 1
+unsigned int replaceLetter (char *rep){
+
+    int longueur = strlen(mot);
+    int retour = 0;
+    unsigned int i = 0;
+
+
+    for (i;i<longueur;i++) {
+
+        if (mot[i] == rep[0]) {
+            motCourant[i] = rep[0];
+            retour = 1;
+        }
+
+
+    }
+
+    return retour ;
+
+}
+
+/*----------------------------------------------------------*/
+// 0 quand les deux chaines sont différentes, sinon 1.
+int compareMots(char* chaine1, char* chaine2) {
+
+    int longueur1 = strlen(chaine1)-1;
+    int longueur2 = strlen(chaine2);
+    unsigned int i;
+
+
+    if(longueur1 != longueur2) {
+
+        return 0;
+    } else {
+        for (i = 0; i < longueur1 ; ++i){
+       
+            if(chaine1[i] != chaine2[i]){
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+
+
+/*---------------------------------------------------------*/
+char* initMotCourant(){
+
+    int longueur = strlen(mot);
+    unsigned int i = 0;
+    char*copy = (char*) malloc (sizeof(char)*256);
+    for (i; i < longueur ; i++ ){
+
+       copy[i] = '*';
+    }
+    
+    printf("copy = %s \n", copy);
+    return copy;
+
+}
+
+
+/*-----------------------------------------------------*/
+int tourDeJeu(int joueur){
+
+    char* rep = askClient(sockList->listSocketsDescriptor[joueur]);
+    char *message = (char*) malloc (sizeof(char)*256);
+    char *message2 = (char*) malloc (sizeof(char)*256);
+    int letterInWord;
+    int longueurRep;
+    longueurRep = strlen(rep)-1;
+
+    //Si le client propose un mot
+    if (longueurRep > 1) {
+
+        // si le mot est le bon
+        if(compareMots(rep, mot) == 1){
+
+           message = "0Bravo vous avez trouvé le bon mot ! :) \n";
+           sendMessage(message,sockList->listSocketsDescriptor[joueur]);
+           sleep(2);
+
+           message2 = "0Le joueur courant a trouvé le bon mot ! Partie terminée. Vous allez etre déconnecté. \n";
+           
+           sendMessageAll(message2); 
+
+           return 0;
+
+
+
+        // si le mot n'est pas le bon
+        }else{
+            message = "0\nLe joueur a proposé un mot mais ce n'est pas le bon. Mot proposé : ";
+
+            char* name_with_extension;
+            name_with_extension = malloc(strlen(message)+1+strlen(rep)); /* make space for the new string (should check the return value ...) */
+            strcpy(name_with_extension, message); /* copy name into the new var */
+            strcat(name_with_extension, rep); /* add the extension */
+
+            sendMessageAll(name_with_extension);
+
+            nbErrors++;
+            nextPlayer();
+            return 1;
+
+        }
+
+    // si le client propose une lettre
+    } else {
+
+   
+        letterInWord = replaceLetter(rep);
+        printf("motCourant = %s \n", motCourant);
+
+        // la lettre est bien dans le mot
+        if (letterInWord > 0){
+
+            message = "0\nLe joueur a proposé une lettre et elle est dans le mot ! : ";
+
+            char* name_with_extension;
+            name_with_extension = malloc(strlen(message)+1+strlen(rep)); /* make space for the new string (should check the return value ...) */
+            strcpy(name_with_extension, message); /* copy name into the new var */
+            strcat(name_with_extension, rep); /* add the extension */
+
+            sendMessageAll(name_with_extension);
+            sleep(2);
+
+            message2 = "0\nLe mot courant est : ";
+
+            char* name_with_extension2;
+            name_with_extension2 = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+            strcpy(name_with_extension2, message2); /* copy name into the new var */
+            strcat(name_with_extension2, motCourant); /* add the extension */
+
+            sendMessageAll(name_with_extension2);
+            sleep(2);
+
+            nextPlayer();
+            return 1;
+
+
+        // la lettre n'est pas dans le mot
+        } else {
+
+            message = "0\nLe joueur a proposé une lettre mais elle n'est pas dans le mot. Lettre proposée : ";
+
+            char* name_with_extension;
+            name_with_extension = malloc(strlen(message)+1+strlen(rep)); /* make space for the new string (should check the return value ...) */
+            strcpy(name_with_extension, message); /* copy name into the new var */
+            strcat(name_with_extension, rep); /* add the extension */
+
+            sendMessageAll(name_with_extension);
+            sleep(2);
+
+            message2 = "0\nLe mot courant est : ";
+
+            char* name_with_extension2;
+
+            name_with_extension2 = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+            strcpy(name_with_extension2, message2); /* copy name into the new var */
+            strcat(name_with_extension2, motCourant); /* add the extension */
+
+            sendMessageAll(name_with_extension2);
+            sleep(2);
+
+            nbErrors++;
+            nextPlayer();
+            return 1;
+
+
+        }
+
+
+
+
+    }
+
+
+}
+
+
 
 /*-----------------------------------------------------*/
 void *startGame() {
 
-    int joueurCourant = 0;
-    char mot[256] = "cheval";
-    int longueurMot = strlen(mot);
-    char *message;
-    message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer. \n$";
+    joueurCourant = 0;
+    mot = (char*) malloc (sizeof(char)*256);
+    motCourant = (char*) malloc (sizeof(char)*256);
+    char *message = (char*) malloc (sizeof(char)*256);
+    char *message2 = (char*) malloc (sizeof(char)*256);
+    char* name_with_extension;
+    char *rep = (char*) malloc (sizeof(char)*256);
+
+    int random = rand()%(19);
+
+    mot = dictionnaire[random];
+    printf("In startGame, Mot = %s \n", mot);
+    motCourant = initMotCourant();
+    printf("In startGame, MotCourant = %s \n", motCourant);
+    message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer. \n";
     sendMessageAll(message);
+    sleep(2);
+    message2 = "0Le mot à trouver est : ";
+
+    name_with_extension = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+    strcpy(name_with_extension, message2); /* copy name into the new var */
+    strcat(name_with_extension, motCourant); /* add the extension */
+
+    printf("MEssage avec extension : %s \n", name_with_extension);
+
+    sendMessageAll(name_with_extension);
 
 
 
+    while (endgame > 0){
 
+        endgame = tourDeJeu(joueurCourant);
 
+    }
+    
+    endGame();
 
 
 }
 
-
-
-
-/*-----------------------------------------------------*/
-void enterGame() {
-
-
-
-
-}
 
 
 
@@ -257,41 +539,11 @@ void *traitementClient (void *socket_descriptor) {
     
     sockList = addSocketToList(sockList, (int) socket_descriptor);
 
-    int longueur;
-    char *message, *message2;
-    message = "0Bienvenue dans la partie ! \n$";
+    char *message = (char*) malloc (sizeof(char)*256);
+   // char *message2 = (char*) malloc (sizeof(char)*256);
+    message = "0Bienvenue dans la partie ! \n";
     sendMessage( message, (int) socket_descriptor); 
-    sleep(3);
-    message2 = "0ça va bien? \n$";
-   // printf("message[0] = %d \n", message[0]);
-    sendMessage( message2, (int) socket_descriptor); 
 
-
-    char *rep = (char*) malloc (sizeof(char)*256);
-    sleep(3);
-    rep = askClient(socket_descriptor);
-    printf("REPONSE CLIENT = %s \n", rep);
-
-    /* création d'un thread pour réceptionner la réponse 
-    pthread_t rThread;
-    int ret;
-     ret = pthread_create(&rThread, NULL, receiveMessage, (void *) socket_descriptor);
-     if (ret) {
-     printf("ERROR: Return Code from pthread_create() is %d\n", ret);
-     exit(1);
-    }*/
-
-
-
-    //printf("hahahahah \n");
-    /*
-    }*/
-     /* créer procédure pour lancer le jeu pour chaque client, avec une boucle qui tourne tant que le jeu est pas fini 
-       changer des variables globales pour lancer le jeu
-    */
-    //enterGame();
-
-    //close( (int) socket_descriptor);
 }
 
 
@@ -366,11 +618,13 @@ exit(1);
         listen(socket_descriptor,5);
     /* attente des connexions et traitement des donnees recues */
   
+
     /*----------------------------------------------------*/
     // On initialise la SocketList
     
     sockList = initSocketList(4);  
-    
+
+    initDico();
 
     for(;;) {
 
@@ -399,7 +653,6 @@ exit(1);
 
             NB_CLIENTS += 1;
             printf("NB_CLIENTS = %d \n", NB_CLIENTS);
-            //TODO : c'est vgraiment chelou
             printf("Il y %d sur 4 joueurs de connectés.\n", NB_CLIENTS);
 
             if (NB_CLIENTS == 4) {
@@ -415,6 +668,10 @@ exit(1);
 
 
             }
+
+
         }
+
     }    
+    
 }

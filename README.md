@@ -6,6 +6,6 @@ compilation serveur : gcc serveur.c -lpthread -o serveur
 compilation client : gcc client.c -o client
 
 exécuter le serveur : ./serveur
-exécuter le client : ./client
+exécuter le client : ./client <adresse-du-serveur>
 
-TO DO : Tester les fonctions concernant les listes de socket (pour check les seg fault)
+TO DO : affiher le nombre d'erreurs aux clients.

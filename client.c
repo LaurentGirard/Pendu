@@ -22,17 +22,19 @@ char *enlevePremierChar(char chaine[256]){
     int longueur = strlen(chaine);
     unsigned int i = 1;
 
-    char find = '$';
+    /*char find = '$';
 
     const char *ptr = strchr(chaine, find);
      int index = ptr - chaine;
 
-     copy = strncpy(copy, chaine, index);
+     copy = strncpy(copy, chaine, index);*/
    // do something
 
+
+
     /* on enlève le premier char*/
-    for (i; i < index ; i++ ) {
-        copy2[i-1]=copy[i];
+    for (i; i < longueur ; i++ ) {
+        copy2[i-1]=chaine[i];
     }
 
     return copy2;
@@ -77,7 +79,7 @@ int main(int argc, char **argv) {
     char *mesg; 
 /* message envoyé */
     if (argc != 2) {
-        perror("usage : client <adresse-serveur> <message-a-transmettre>");
+        perror("usage : client <adresse-serveur>");
         exit(1);
     }
 
@@ -133,14 +135,17 @@ exit(1);
 
     /* lecture de la reponse en provenance du serveur */
     //while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+
+    char *copy;
+
     while ((longueur = recvfrom(socket_descriptor, buffer, 256, 0, NULL, NULL) > 0 )) {
 
         /* message simple à afficher */
         if ( buffer[0] == 48){
 
-            printf("C'est un message à afficher alors je vais l'afficher maintenant. \n");
+         //   printf("C'est un message à afficher alors je vais l'afficher maintenant. \n");
             //char *copy = (char*) malloc (sizeof(char)*256);
-            char *copy;
+            copy = (char*) malloc (sizeof(char)*256);
             copy = enlevePremierChar(buffer);
             
             /*memset(buffer, 0, 256); 
@@ -150,19 +155,19 @@ exit(1);
            /* printf("longueur = %d \n", longueur);
             printf("copy = %s \n", copy);*/
             write(1,copy,longueur);
-           // free(copy);
+           free(copy);
         }
 
         /* le serveur nous pose une question */
         if ( buffer[0] == 49){
 
-            printf(" serveur : ");
+            //printf(" serveur : ");
             char *copy;
             copy = enlevePremierChar(buffer);
             longueur = strlen(copy);
             write(1,copy,longueur);
             sleep(2);
-            printf("votre réponse ? \n");
+            //printf("votre réponse ? \n");
             char strvar[256];
             fgets (strvar, 256, stdin);
 
@@ -171,7 +176,7 @@ exit(1);
                 perror("erreur : impossible d'ecrire le message destine au serveur.");
                 exit(1);
             } else {
-                printf("message envoyé!");
+                //printf("message envoyé!");
             }
 
 
