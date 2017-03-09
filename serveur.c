@@ -39,6 +39,59 @@ char *motCourant;
 
 char **dictionnaire;
 
+
+/*-----------------------------------------------------*/
+char* currentInterface(int nbErrors){
+
+    char* hangman = (char*) malloc (sizeof(char)*256);
+
+    switch(nbErrors){
+
+        case 1:
+            hangman = "0============\n";
+        break;
+
+        case 2:
+            hangman = "0   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n============";        
+        break;
+
+        case 3:
+            hangman = "0    ==========Y===\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n============";
+        break;
+
+        case 4:
+            hangman = "0    ==========Y===\n   ||  /\n   || /\n   ||/\n   ||\n   ||\n   ||\n  /||\n //||\n============";
+        break;
+
+        case 5:
+            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/\n   ||\n   ||\n   ||\n  /||\n //||\n============";
+        break;
+
+        case 6:
+            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||\n   ||\n   ||\n  /||\n //||\n============";
+        break;
+
+        case 7:
+            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||         |\n   ||\n   ||\n  /||\n //||\n============";
+        break;
+
+        case 8:
+            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||         |\\\n   ||\n   ||\n  /||\n //||\n============";
+        break;
+
+        case 9:
+            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||        /|\\\n   ||        /\n   ||\n  /||\n //||\n============";
+        break;
+    
+        case 10:
+            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||        /|\\\n   ||        /|\n   ||\n  /||\n //||\n============";
+        break;
+    }
+
+    return hangman;
+}
+
+
 /*-----------------------------------------------------*/
 void initDico(){
     
@@ -202,6 +255,20 @@ void sendMessage(char *message, int sock){
 }
 
 /*-----------------------------------------------------*/
+void sendInterfaceAll(){
+
+    char *messageError = currentInterface(nbErrors);
+
+    sendMessage(messageError,sockList->listSocketsDescriptor[0] );
+    sendMessage(messageError,sockList->listSocketsDescriptor[1] );
+    sendMessage(messageError,sockList->listSocketsDescriptor[2] );
+    sendMessage(messageError,sockList->listSocketsDescriptor[3] );
+
+    return;
+}
+
+
+/*-----------------------------------------------------*/
 void sendMessageAll(char *message){
 
     char *copy = (char*) malloc (sizeof(char)*256);
@@ -285,12 +352,9 @@ unsigned int replaceLetter (char *rep){
             motCourant[i] = rep[0];
             retour = 1;
         }
-
-
     }
 
     return retour ;
-
 }
 
 /*----------------------------------------------------------*/
@@ -300,7 +364,6 @@ int compareMots(char* chaine1, char* chaine2) {
     int longueur1 = strlen(chaine1)-1;
     int longueur2 = strlen(chaine2);
     unsigned int i;
-
 
     if(longueur1 != longueur2) {
 
@@ -316,7 +379,6 @@ int compareMots(char* chaine1, char* chaine2) {
 
     return 1;
 }
-
 
 
 /*---------------------------------------------------------*/
@@ -346,6 +408,7 @@ int tourDeJeu(int joueur){
     int longueurRep;
     longueurRep = strlen(rep)-1;
 
+
     //Si le client propose un mot
     if (longueurRep > 1) {
 
@@ -363,7 +426,6 @@ int tourDeJeu(int joueur){
            return 0;
 
 
-
         // si le mot n'est pas le bon
         }else{
             message = "0\nLe joueur a proposé un mot mais ce n'est pas le bon. Mot proposé : ";
@@ -376,6 +438,8 @@ int tourDeJeu(int joueur){
             sendMessageAll(name_with_extension);
 
             nbErrors++;
+            sendInterfaceAll();
+
             nextPlayer();
             return 1;
 
@@ -440,20 +504,17 @@ int tourDeJeu(int joueur){
             sleep(2);
 
             nbErrors++;
+
+            sendInterfaceAll();
+
             nextPlayer();
             return 1;
 
-
         }
-
-
-
 
     }
 
-
 }
-
 
 
 /*-----------------------------------------------------*/
@@ -466,6 +527,7 @@ void *startGame() {
     char *message2 = (char*) malloc (sizeof(char)*256);
     char* name_with_extension;
     char *rep = (char*) malloc (sizeof(char)*256);
+    char *errorMessage;
 
     int random = rand()%(19);
 
@@ -482,25 +544,26 @@ void *startGame() {
     strcpy(name_with_extension, message2); /* copy name into the new var */
     strcat(name_with_extension, motCourant); /* add the extension */
 
-    printf("MEssage avec extension : %s \n", name_with_extension);
+    printf("Message avec extension : %s \n", name_with_extension);
 
     sendMessageAll(name_with_extension);
 
 
-
-    while (endgame > 0){
+    while (endgame > 0 && nbErrors < 12 ){
 
         endgame = tourDeJeu(joueurCourant);
 
     }
+
+    if(nbErrors >= 12){
+        errorMessage = (char*) malloc (sizeof(char)*256);
+        errorMessage = "0Le jeu est terminé, vous avez perdu, il ne vous reste plus aucun essai";
+        sendMessageAll(errorMessage);
+    }
     
     endGame();
 
-
 }
-
-
-
 
 
 
