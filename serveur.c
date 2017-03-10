@@ -48,43 +48,43 @@ char* currentInterface(int nbErrors){
     switch(nbErrors){
 
         case 1:
-            hangman = "0============\n";
+            hangman = "0\n============\n";
         break;
 
         case 2:
-            hangman = "0   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n============";        
+            hangman = "0\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n============";        
         break;
 
         case 3:
-            hangman = "0    ==========Y===\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n============";
+            hangman = "0\n    ==========Y===\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n   ||\n============";
         break;
 
         case 4:
-            hangman = "0    ==========Y===\n   ||  /\n   || /\n   ||/\n   ||\n   ||\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /\n   || /\n   ||/\n   ||\n   ||\n   ||\n  /||\n //||\n============";
         break;
 
         case 5:
-            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/\n   ||\n   ||\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /      |\n   || /       |\n   ||/\n   ||\n   ||\n   ||\n  /||\n //||\n============";
         break;
 
         case 6:
-            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||\n   ||\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||\n   ||\n   ||\n  /||\n //||\n============";
         break;
 
         case 7:
-            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||         |\n   ||\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||         |\n   ||\n   ||\n  /||\n //||\n============";
         break;
 
         case 8:
-            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||         |\\\n   ||\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||         |\\\n   ||\n   ||\n  /||\n //||\n============";
         break;
 
         case 9:
-            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||        /|\\\n   ||        /\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||        /|\\\n   ||        /\n   ||\n  /||\n //||\n============";
         break;
     
         case 10:
-            hangman = "0    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||        /|\\\n   ||        /|\n   ||\n  /||\n //||\n============";
+            hangman = "0\n    ==========Y===\n   ||  /      |\n   || /       |\n   ||/        O\n   ||        /|\\\n   ||        /|\n   ||\n  /||\n //||\n============";
         break;
     }
 
@@ -436,6 +436,19 @@ int tourDeJeu(int joueur){
             strcat(name_with_extension, rep); /* add the extension */
 
             sendMessageAll(name_with_extension);
+            sleep(1);
+
+            message2 = "0\nLe mot courant est : ";
+
+            char* name_with_extension2;
+
+            name_with_extension2 = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+            strcpy(name_with_extension2, message2); /* copy name into the new var */
+            strcat(name_with_extension2, motCourant); /* add the extension */
+
+            sendMessageAll(name_with_extension2);
+            sleep(2);
+
 
             nbErrors++;
             sendInterfaceAll();
@@ -529,6 +542,7 @@ void *startGame() {
     char *rep = (char*) malloc (sizeof(char)*256);
     char *errorMessage;
 
+    srand(time(NULL));
     int random = rand()%(19);
 
     mot = dictionnaire[random];
@@ -549,15 +563,15 @@ void *startGame() {
     sendMessageAll(name_with_extension);
 
 
-    while (endgame > 0 && nbErrors < 12 ){
+    while (endgame > 0 && nbErrors < 11 ){
 
         endgame = tourDeJeu(joueurCourant);
 
     }
 
-    if(nbErrors >= 12){
+    if(nbErrors >= 11){
         errorMessage = (char*) malloc (sizeof(char)*256);
-        errorMessage = "0Le jeu est terminé, vous avez perdu, il ne vous reste plus aucun essai";
+        errorMessage = "0\nLe jeu est terminé, vous avez perdu, il ne vous reste plus aucun essai";
         sendMessageAll(errorMessage);
     }
     
