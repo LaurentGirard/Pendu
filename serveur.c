@@ -181,17 +181,17 @@ void renvoi (int sock) {
     if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
         return;
 
-    printf("message lu : %s \n", buffer);
+    //printf("message lu : %s \n", buffer);
     buffer[0] = 'R';
     buffer[1] = 'E';
     buffer[longueur] = '#';
     buffer[longueur+1] ='\0';
-    printf("message apres traitement : %s \n", buffer);  
-    printf("renvoi du message traite.\n");
+   // printf("message apres traitement : %s \n", buffer);  
+   // printf("renvoi du message traite.\n");
     /* mise en attente du programme pour simuler un delai de transmission */
     sleep(3);
     write(sock,buffer,strlen(buffer)+1);    
-    printf("message envoye. \n");       
+   // printf("message envoye. \n");       
     return;
 }
 
@@ -209,9 +209,9 @@ char* receiveMessage(int socket) {
     if (ret < 0) {  
         printf("Error receiving data!\n");    
     } else {
-        printf("client: ");
-        fputs(buffer, stdout);
-        printf("\n");
+       // printf("client: ");
+       // fputs(buffer, stdout);
+       // printf("\n");
         copy = strcpy(copy, buffer);
         return copy;
     }
@@ -244,7 +244,7 @@ void sendMessage(char *message, int sock){
     }
 
     write(sock,copy,strlen(copy)+1);    
-    printf("message envoyé! \n");       
+    //printf("message envoyé! \n");       
     return;
 }
 
@@ -282,7 +282,7 @@ void sendMessageAll(char *message){
     sendMessage(copy,sockList->listSocketsDescriptor[2] );
     sendMessage(copy,sockList->listSocketsDescriptor[3] );
 
-    printf("message envoyé à tout le monde ! \n");       
+   // printf("message envoyé à tout le monde ! \n");       
     return;
 }
 
@@ -385,7 +385,7 @@ char* initMotCourant(){
        copy[i] = '*';
     }
     
-    printf("copy = %s \n", copy);
+  //  printf("copy = %s \n", copy);
     return copy;
 
 }
@@ -456,7 +456,7 @@ int tourDeJeu(int joueur){
     } else {
 
         letterInWord = replaceLetter(rep);
-        printf("motCourant = %s \n", motCourant);
+       // printf("motCourant = %s \n", motCourant);
 
         // la lettre est bien dans le mot
         if (letterInWord > 0){
@@ -541,9 +541,9 @@ void *startGame() {
     int random = rand()%(19);
 
     mot = dictionnaire[random];
-    printf("In startGame, Mot = %s \n", mot);
+   // printf("In startGame, Mot = %s \n", mot);
     motCourant = initMotCourant();
-    printf("In startGame, MotCourant = %s \n", motCourant);
+   // printf("In startGame, MotCourant = %s \n", motCourant);
     message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer. \n";
     sendMessageAll(message);
     sleep(2);
@@ -553,7 +553,7 @@ void *startGame() {
     strcpy(name_with_extension, message2); /* copy name into the new var */
     strcat(name_with_extension, motCourant); /* add the extension */
 
-    printf("Message avec extension : %s \n", name_with_extension);
+   // printf("Message avec extension : %s \n", name_with_extension);
 
     sendMessageAll(name_with_extension);
 
@@ -589,9 +589,9 @@ void * receiveMessageThread(void * socket) {
   if (ret < 0) {  
    printf("Error receiving data!\n");    
   } else {
-   printf("client: ");
-   fputs(buffer, stdout);
-   printf("\n");
+  // printf("client: ");
+   //fputs(buffer, stdout);
+  // printf("\n");
    char *message;
    message = "0C'est génial :D";
    sendMessage(message, (int) socket);
@@ -724,12 +724,12 @@ exit(1);
             }
 
             NB_CLIENTS += 1;
-            printf("NB_CLIENTS = %d \n", NB_CLIENTS);
-            printf("Il y %d sur 4 joueurs de connectés.\n", NB_CLIENTS);
+          //  printf("NB_CLIENTS = %d \n", NB_CLIENTS);
+         //   printf("Il y %d sur 4 joueurs de connectés.\n", NB_CLIENTS);
 
             if (NB_CLIENTS == 4) {
 
-            printf("start game \n");
+          //  printf("start game \n");
   
              /*lancer la partie quand tout les clients sont arrivés.*/
             //création du thread pour la nouvelle partie

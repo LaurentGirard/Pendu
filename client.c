@@ -22,16 +22,6 @@ char *enlevePremierChar(char chaine[256]){
     int longueur = strlen(chaine);
     unsigned int i = 1;
 
-    /*char find = '$';
-
-    const char *ptr = strchr(chaine, find);
-     int index = ptr - chaine;
-
-     copy = strncpy(copy, chaine, index);*/
-   // do something
-
-
-
     /* on enlève le premier char*/
     for (i; i < longueur ; i++ ) {
         copy2[i-1]=chaine[i];
@@ -86,8 +76,8 @@ int main(int argc, char **argv) {
     prog = argv[0];
     host = argv[1];
     //mesg = argv[2];
-    printf("nom de l'executable DD: %s \n", prog);
-    printf("adresse du serveur  : %s \n", host);
+    //printf("nom de l'executable DD: %s \n", prog);
+   // printf("adresse du serveur  : %s \n", host);
     //printf("message envoye      : %s \n", mesg);
     if ((ptr_host = gethostbyname(host)) == NULL) {
         perror("erreur : impossible de trouver le serveur a partir de son adresse.");
@@ -122,7 +112,7 @@ exit(1);
         exit(1);
     }
     printf("connexion etablie avec le serveur. \n");
-    printf("envoi d'un message au serveur. \n");
+   // printf("envoi d'un message au serveur. \n");
     /* envoi du message vers le serveur */
    /* if ((write(socket_descriptor, mesg, strlen(mesg))) < 0) {
         perror("erreur : impossible d'ecrire le message destine au serveur.");
