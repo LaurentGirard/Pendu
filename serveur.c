@@ -17,7 +17,6 @@ Serveur à lancer avant le client
 #define TAILLE_MAX_NOM 256
 
 
-
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
@@ -39,16 +38,15 @@ char *motCourant;
 
 char **dictionnaire;
 
-
 /*-----------------------------------------------------*/
 char* currentInterface(int nbErrors){
 
-    char* hangman = (char*) malloc (sizeof(char)*256);
+    char* hangman = (char*) calloc(TAILLE_MAX_NOM, sizeof(char));
 
     switch(nbErrors){
 
         case 1:
-            hangman = "0\n============\n";
+            hangman = "0\n     \n     \n     \n     \n     \n     \n     \n     \n============\n";
         break;
 
         case 2:
@@ -95,10 +93,10 @@ char* currentInterface(int nbErrors){
 /*-----------------------------------------------------*/
 void initDico(){
     
-    dictionnaire = (char**) malloc (sizeof(char*)*20);
+    dictionnaire = (char**) calloc(20,sizeof(char*));
     unsigned int i;
     for(i = 0; i < 20 ; ++i){
-        dictionnaire[i] = (char*) malloc(sizeof(char)*256);
+        dictionnaire[i] = (char*) calloc(TAILLE_MAX_NOM, sizeof(char));
     }
 
     dictionnaire[0] = "souris";
@@ -125,11 +123,11 @@ void initDico(){
 
 /*------------------------------------------------------*/
 socketList* initSocketList(int s){
-    socketList* structList = (socketList*) malloc(sizeof(socketList));
+    socketList* structList = (socketList*) calloc(1,sizeof(socketList));
     structList->size = s;
     structList->currentSize = 0;
 
-    structList->listSocketsDescriptor = (int*) malloc(sizeof(int)*structList->size);
+    structList->listSocketsDescriptor = (int*) calloc(structList->size,sizeof(int));
 
     return structList;
 }
@@ -178,7 +176,7 @@ socketList* addSocketToList(socketList* list, int socket_descriptor){
 
 /*------------------------------------------------------*/
 void renvoi (int sock) {
-    char buffer[256];
+    char buffer[TAILLE_MAX_NOM];
     int longueur;
     if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
         return;
@@ -200,31 +198,31 @@ void renvoi (int sock) {
 /*------------------------------------------------------*/
 /*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
 char* receiveMessage(int socket) {
- int sockfd, ret;
- char buffer[256]; 
- char *copy = (char*) malloc (sizeof(char)*256);
- sockfd = (int) socket;
- memset(buffer, 0, 256);  
+    int sockfd, ret;
+    char buffer[TAILLE_MAX_NOM]; 
+    char *copy = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+    sockfd = (int) socket;
+    memset(buffer, 0, TAILLE_MAX_NOM);  
  
 
-  ret = recvfrom(sockfd, buffer, 256, 0, NULL, NULL);  
-  if (ret < 0) {  
-   printf("Error receiving data!\n");    
-  } else {
-   printf("client: ");
-   fputs(buffer, stdout);
-   printf("\n");
-   copy = strcpy(copy, buffer);
-   return copy;
-   }
+    ret = recvfrom(sockfd, buffer, TAILLE_MAX_NOM, 0, NULL, NULL);  
+    if (ret < 0) {  
+        printf("Error receiving data!\n");    
+    } else {
+        printf("client: ");
+        fputs(buffer, stdout);
+        printf("\n");
+        copy = strcpy(copy, buffer);
+        return copy;
+    }
  
 }
 
 /*------------------------------------------------------*/
 char* askClient (int sock) {
 
-    char *message = (char*) malloc (sizeof(char)*256);
-    char *rep = (char*) malloc (sizeof(char)*256);
+    char *message = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+    char *rep = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     message = "1\nC'est à vous de jouer, que proposez vous ?. \n";
     sendMessage(message, sock);
 
@@ -232,14 +230,10 @@ char* askClient (int sock) {
     return rep;
 }
 
-
-
-
-
 /*-----------------------------------------------------*/
 void sendMessage(char *message, int sock){
 
-    char *copy = (char*) malloc (sizeof(char)*256);;
+    char *copy = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     int longueur;
     unsigned int i = 0;
 
@@ -264,6 +258,7 @@ void sendInterfaceAll(){
     sendMessage(messageError,sockList->listSocketsDescriptor[2] );
     sendMessage(messageError,sockList->listSocketsDescriptor[3] );
 
+    sleep(2);
     return;
 }
 
@@ -271,7 +266,7 @@ void sendInterfaceAll(){
 /*-----------------------------------------------------*/
 void sendMessageAll(char *message){
 
-    char *copy = (char*) malloc (sizeof(char)*256);
+    char *copy = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     int longueur;
     unsigned int i = 0;
 
@@ -280,7 +275,6 @@ void sendMessageAll(char *message){
     for (i; i < longueur;i++){
         copy[i] = message[i];
     }
-
 
 
     sendMessage(copy,sockList->listSocketsDescriptor[0] );
@@ -334,7 +328,6 @@ void endGame() {
     nbErrors = 0;
     sockList->currentSize = 0;
 
-
 }
 
 /*--------------------------------------------------------*/
@@ -386,7 +379,7 @@ char* initMotCourant(){
 
     int longueur = strlen(mot);
     unsigned int i = 0;
-    char*copy = (char*) malloc (sizeof(char)*256);
+    char*copy = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     for (i; i < longueur ; i++ ){
 
        copy[i] = '*';
@@ -402,12 +395,11 @@ char* initMotCourant(){
 int tourDeJeu(int joueur){
 
     char* rep = askClient(sockList->listSocketsDescriptor[joueur]);
-    char *message = (char*) malloc (sizeof(char)*256);
-    char *message2 = (char*) malloc (sizeof(char)*256);
+    char *message = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+    char *message2 = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     int letterInWord;
     int longueurRep;
     longueurRep = strlen(rep)-1;
-
 
     //Si le client propose un mot
     if (longueurRep > 1) {
@@ -430,8 +422,10 @@ int tourDeJeu(int joueur){
         }else{
             message = "0\nLe joueur a proposé un mot mais ce n'est pas le bon. Mot proposé : ";
 
+            // addInMatrice(listWordsUsed, rep);
+
             char* name_with_extension;
-            name_with_extension = malloc(strlen(message)+1+strlen(rep)); /* make space for the new string (should check the return value ...) */
+            name_with_extension = (char*) calloc(strlen(message)+1+strlen(rep),sizeof(char)); /* make space for the new string (should check the return value ...) */
             strcpy(name_with_extension, message); /* copy name into the new var */
             strcat(name_with_extension, rep); /* add the extension */
 
@@ -442,7 +436,7 @@ int tourDeJeu(int joueur){
 
             char* name_with_extension2;
 
-            name_with_extension2 = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+            name_with_extension2 = (char*) calloc(strlen(message2)+1+strlen(motCourant),sizeof(char)); /* make space for the new string (should check the return value ...) */
             strcpy(name_with_extension2, message2); /* copy name into the new var */
             strcat(name_with_extension2, motCourant); /* add the extension */
 
@@ -461,7 +455,6 @@ int tourDeJeu(int joueur){
     // si le client propose une lettre
     } else {
 
-   
         letterInWord = replaceLetter(rep);
         printf("motCourant = %s \n", motCourant);
 
@@ -471,7 +464,7 @@ int tourDeJeu(int joueur){
             message = "0\nLe joueur a proposé une lettre et elle est dans le mot ! : ";
 
             char* name_with_extension;
-            name_with_extension = malloc(strlen(message)+1+strlen(rep)); /* make space for the new string (should check the return value ...) */
+            name_with_extension = (char*) calloc(strlen(message)+1+strlen(rep),sizeof(char)); /* make space for the new string (should check the return value ...) */
             strcpy(name_with_extension, message); /* copy name into the new var */
             strcat(name_with_extension, rep); /* add the extension */
 
@@ -481,7 +474,7 @@ int tourDeJeu(int joueur){
             message2 = "0\nLe mot courant est : ";
 
             char* name_with_extension2;
-            name_with_extension2 = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+            name_with_extension2 = (char*) calloc(strlen(message2)+1+strlen(motCourant),sizeof(char)); /* make space for the new string (should check the return value ...) */
             strcpy(name_with_extension2, message2); /* copy name into the new var */
             strcat(name_with_extension2, motCourant); /* add the extension */
 
@@ -498,7 +491,7 @@ int tourDeJeu(int joueur){
             message = "0\nLe joueur a proposé une lettre mais elle n'est pas dans le mot. Lettre proposée : ";
 
             char* name_with_extension;
-            name_with_extension = malloc(strlen(message)+1+strlen(rep)); /* make space for the new string (should check the return value ...) */
+            name_with_extension = (char*) calloc(strlen(message)+1+strlen(rep),sizeof(char)); /* make space for the new string (should check the return value ...) */
             strcpy(name_with_extension, message); /* copy name into the new var */
             strcat(name_with_extension, rep); /* add the extension */
 
@@ -509,7 +502,7 @@ int tourDeJeu(int joueur){
 
             char* name_with_extension2;
 
-            name_with_extension2 = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+            name_with_extension2 = (char*) calloc(strlen(message2)+1+strlen(motCourant),sizeof(char)); /* make space for the new string (should check the return value ...) */
             strcpy(name_with_extension2, message2); /* copy name into the new var */
             strcat(name_with_extension2, motCourant); /* add the extension */
 
@@ -523,6 +516,8 @@ int tourDeJeu(int joueur){
             nextPlayer();
             return 1;
 
+            // free(sendListOfChars);
+
         }
 
     }
@@ -534,12 +529,12 @@ int tourDeJeu(int joueur){
 void *startGame() {
 
     joueurCourant = 0;
-    mot = (char*) malloc (sizeof(char)*256);
-    motCourant = (char*) malloc (sizeof(char)*256);
-    char *message = (char*) malloc (sizeof(char)*256);
-    char *message2 = (char*) malloc (sizeof(char)*256);
+    mot = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+    motCourant = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+    char *message = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+    char *message2 = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     char* name_with_extension;
-    char *rep = (char*) malloc (sizeof(char)*256);
+    char *rep = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     char *errorMessage;
 
     srand(time(NULL));
@@ -554,7 +549,7 @@ void *startGame() {
     sleep(2);
     message2 = "0Le mot à trouver est : ";
 
-    name_with_extension = malloc(strlen(message2)+1+strlen(motCourant)); /* make space for the new string (should check the return value ...) */
+    name_with_extension = (char*) calloc(strlen(message2)+1+strlen(motCourant),sizeof(char)); /* make space for the new string (should check the return value ...) */
     strcpy(name_with_extension, message2); /* copy name into the new var */
     strcat(name_with_extension, motCourant); /* add the extension */
 
@@ -570,7 +565,7 @@ void *startGame() {
     }
 
     if(nbErrors >= 11){
-        errorMessage = (char*) malloc (sizeof(char)*256);
+        errorMessage = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
         errorMessage = "0\nLe jeu est terminé, vous avez perdu, il ne vous reste plus aucun essai";
         sendMessageAll(errorMessage);
     }
@@ -585,12 +580,12 @@ void *startGame() {
 /*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
 void * receiveMessageThread(void * socket) {
  int sockfd, ret;
- char buffer[256]; 
+ char buffer[TAILLE_MAX_NOM]; 
  sockfd = (int) socket;
- memset(buffer, 0, 256);  
+ memset(buffer, 0, TAILLE_MAX_NOM);  
  
 
-  ret = recvfrom(sockfd, buffer, 256, 0, NULL, NULL);  
+  ret = recvfrom(sockfd, buffer, TAILLE_MAX_NOM, 0, NULL, NULL);  
   if (ret < 0) {  
    printf("Error receiving data!\n");    
   } else {
@@ -616,8 +611,8 @@ void *traitementClient (void *socket_descriptor) {
     
     sockList = addSocketToList(sockList, (int) socket_descriptor);
 
-    char *message = (char*) malloc (sizeof(char)*256);
-   // char *message2 = (char*) malloc (sizeof(char)*256);
+    char *message = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
+   // char *message2 = (char*) malloc (sizeof(char)*TAILLE_MAX_NOM);
     message = "0Bienvenue dans la partie ! \n";
     sendMessage( message, (int) socket_descriptor); 
 
@@ -717,7 +712,7 @@ exit(1);
 
         /*Si la partie est pleine, on envoie un message au client*/
         if (NB_CLIENTS == 4) {
-            char gameFull[256] = "Il y a déjà une partie en cours, veuillez essayer un peu plus tard. \n";
+            char gameFull[TAILLE_MAX_NOM] = "Il y a déjà une partie en cours, veuillez essayer un peu plus tard. \n";
             sendMessage(gameFull, nouv_socket_descriptor);
             close(nouv_socket_descriptor);
         } else {

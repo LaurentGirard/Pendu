@@ -17,8 +17,8 @@ typedef struct servent servent;
 /*-------------------------------------------------------------------------*/
 char *enlevePremierChar(char chaine[256]){
 
-    char *copy = (char*) malloc (sizeof(char)*256);
-    char *copy2 = (char*) malloc (sizeof(char)*256);
+    char *copy = (char*) calloc (256,sizeof(char));
+    char *copy2 = (char*) calloc (256,sizeof(char));
     int longueur = strlen(chaine);
     unsigned int i = 1;
 
@@ -143,9 +143,7 @@ exit(1);
         /* message simple à afficher */
         if ( buffer[0] == 48){
 
-         //   printf("C'est un message à afficher alors je vais l'afficher maintenant. \n");
-            //char *copy = (char*) malloc (sizeof(char)*256);
-            copy = (char*) malloc (sizeof(char)*256);
+            copy = (char*) calloc (256,sizeof(char));
             copy = enlevePremierChar(buffer);
             
             /*memset(buffer, 0, 256); 
