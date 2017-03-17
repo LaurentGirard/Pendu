@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------
 Client a lancer apres le serveur avec la commande :
-client <adresse-serveur> <message-a-transmettre>
+client <adresse-serveur> 
 ------------------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,6 +15,7 @@ typedef struct servent servent;
 
 
 /*-------------------------------------------------------------------------*/
+// Méthode retirant le premier caractère d'une chaine.
 char *enlevePremierChar(char chaine[256]){
 
     char *copy = (char*) calloc (256,sizeof(char));
@@ -29,25 +30,6 @@ char *enlevePremierChar(char chaine[256]){
 
     return copy2;
 }
-
-/*--------------------------------------------------------------------------
-void * receiveMessage(void * socket) {
- int sockfd, ret;
- char buffer[BUF_SIZE]; 
- sockfd = (int) socket;
- memset(buffer, 0, BUF_SIZE);  
- for (;;) {
-  ret = recvfrom(sockfd, buffer, BUF_SIZE, 0, NULL, NULL);  
-  if (ret < 0) {  
-   printf("Error receiving data!\n");    
-  } else {
-   printf("server: ");
-   fputs(buffer, stdout);
-   //printf("\n");
-  }  
- }
-}*/
-
 
 
 int main(int argc, char **argv) {
@@ -75,10 +57,7 @@ int main(int argc, char **argv) {
 
     prog = argv[0];
     host = argv[1];
-    //mesg = argv[2];
-    //printf("nom de l'executable DD: %s \n", prog);
-   // printf("adresse du serveur  : %s \n", host);
-    //printf("message envoye      : %s \n", mesg);
+
     if ((ptr_host = gethostbyname(host)) == NULL) {
         perror("erreur : impossible de trouver le serveur a partir de son adresse.");
         exit(1);
@@ -112,19 +91,6 @@ exit(1);
         exit(1);
     }
     printf("connexion etablie avec le serveur. \n");
-   // printf("envoi d'un message au serveur. \n");
-    /* envoi du message vers le serveur */
-   /* if ((write(socket_descriptor, mesg, strlen(mesg))) < 0) {
-        perror("erreur : impossible d'ecrire le message destine au serveur.");
-        exit(1);
-    }
-    /* mise en attente du prgramme pour simuler un delai de transmission 
-    sleep(3);
-    printf("message envoye au serveur. \n");*/
-
-
-    /* lecture de la reponse en provenance du serveur */
-    //while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
 
     char *copy;
 
@@ -134,46 +100,33 @@ exit(1);
         if ( buffer[0] == 48){
 
             copy = (char*) calloc (256,sizeof(char));
-            copy = enlevePremierChar(buffer);
-            
-            /*memset(buffer, 0, 256); 
-            fputs(buffer, stdout);*/
+            copy = enlevePremierChar(buffer);            
 
-           longueur = strlen(copy);
-           /* printf("longueur = %d \n", longueur);
-            printf("copy = %s \n", copy);*/
+            longueur = strlen(copy);
+
             write(1,copy,longueur);
-           free(copy);
-        }
+            free(copy);
+        } 
 
         /* le serveur nous pose une question */
         if ( buffer[0] == 49){
 
-            //printf(" serveur : ");
             char *copy;
             copy = enlevePremierChar(buffer);
             longueur = strlen(copy);
             write(1,copy,longueur);
             sleep(2);
-            //printf("votre réponse ? \n");
+
             char strvar[256];
             fgets (strvar, 256, stdin);
-
             
             if ((write(socket_descriptor, strvar, sizeof(strvar))) < 0) {
                 perror("erreur : impossible d'ecrire le message destine au serveur.");
                 exit(1);
-            } else {
-                //printf("message envoyé!");
             }
 
-
-        }
-
-        
+        }        
     }
-
-
 
     printf("\nfin de la reception.\n");
     close(socket_descriptor);

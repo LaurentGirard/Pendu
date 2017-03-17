@@ -29,6 +29,7 @@ typedef struct socketList{
 }socketList;
 
 int NB_CLIENTS = 0;
+int NB_JOUEURS_MAX = 4;
 int joueurCourant = 0;
 int endgame = 1;
 int nbErrors = 0;
@@ -39,6 +40,7 @@ char *motCourant;
 char **dictionnaire;
 
 /*-----------------------------------------------------*/
+// Méthode retournant l'état graphique du Pendu selon le nombre d'erreurs.
 char* currentInterface(int nbErrors){
 
     char* hangman = (char*) calloc(TAILLE_MAX_NOM, sizeof(char));
@@ -91,6 +93,7 @@ char* currentInterface(int nbErrors){
 
 
 /*-----------------------------------------------------*/
+// Méthode créant le dictionnaire.
 void initDico(){
     
     dictionnaire = (char**) calloc(20,sizeof(char*));
@@ -122,6 +125,7 @@ void initDico(){
 }
 
 /*------------------------------------------------------*/
+// Méthode initialisant une SocketList.
 socketList* initSocketList(int s){
     socketList* structList = (socketList*) calloc(1,sizeof(socketList));
     structList->size = s;
@@ -132,9 +136,8 @@ socketList* initSocketList(int s){
     return structList;
 }
 
-
-// Fonction de recopie d'une liste de socket dans une autre 2 fois plus grande
 /*------------------------------------------------------*/
+// Fonction de recopie d'une liste de socket dans une autre 2 fois plus grande.
 socketList* recopySocketList(socketList* source){
 
     socketList* copy = initSocketList(source->size*2);
@@ -152,9 +155,8 @@ socketList* recopySocketList(socketList* source){
     return NULL;
 }
 
-
-//Fonction d'ajout d'un socket dans une liste
 /*-------------------------------------------------------*/
+//Fonction d'ajout d'un socket dans une liste.
 socketList* addSocketToList(socketList* list, int socket_descriptor){
 
     socketList* listCopy;
@@ -174,26 +176,6 @@ socketList* addSocketToList(socketList* list, int socket_descriptor){
     }
 }
 
-/*------------------------------------------------------*/
-void renvoi (int sock) {
-    char buffer[TAILLE_MAX_NOM];
-    int longueur;
-    if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
-        return;
-
-    //printf("message lu : %s \n", buffer);
-    buffer[0] = 'R';
-    buffer[1] = 'E';
-    buffer[longueur] = '#';
-    buffer[longueur+1] ='\0';
-   // printf("message apres traitement : %s \n", buffer);  
-   // printf("renvoi du message traite.\n");
-    /* mise en attente du programme pour simuler un delai de transmission */
-    sleep(3);
-    write(sock,buffer,strlen(buffer)+1);    
-   // printf("message envoye. \n");       
-    return;
-}
 
 /*------------------------------------------------------*/
 /*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
@@ -209,9 +191,6 @@ char* receiveMessage(int socket) {
     if (ret < 0) {  
         printf("Error receiving data!\n");    
     } else {
-       // printf("client: ");
-       // fputs(buffer, stdout);
-       // printf("\n");
         copy = strcpy(copy, buffer);
         return copy;
     }
@@ -231,6 +210,7 @@ char* askClient (int sock) {
 }
 
 /*-----------------------------------------------------*/
+// Méthode envoyant un message à un client à l'aide de son socketDescriptor.
 void sendMessage(char *message, int sock){
 
     char *copy = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
@@ -243,12 +223,12 @@ void sendMessage(char *message, int sock){
         copy[i] = message[i];
     }
 
-    write(sock,copy,strlen(copy)+1);    
-    //printf("message envoyé! \n");       
+    write(sock,copy,strlen(copy)+1);           
     return;
 }
 
 /*-----------------------------------------------------*/
+// Méthode envoyant l'état graphique du Pendu à tous les joueurs.
 void sendInterfaceAll(){
 
     char *messageError = currentInterface(nbErrors);
@@ -281,12 +261,12 @@ void sendMessageAll(char *message){
     sendMessage(copy,sockList->listSocketsDescriptor[1] );
     sendMessage(copy,sockList->listSocketsDescriptor[2] );
     sendMessage(copy,sockList->listSocketsDescriptor[3] );
-
-   // printf("message envoyé à tout le monde ! \n");       
+       
     return;
 }
 
 /*------------------------------------------------------*/
+// Méthode qui itère la variable du joueurCourant.
 void nextPlayer(){
     
    switch(joueurCourant) {
@@ -316,12 +296,14 @@ void nextPlayer(){
 
 
 /*-------------------------------------------------------*/
+// Méthode de fermeture de la partie : déconnexion des joueurs et réinitialisation du jeu.
 void endGame() {
 
-    close (sockList->listSocketsDescriptor[0]);
-    close (sockList->listSocketsDescriptor[1]);
-    close (sockList->listSocketsDescriptor[2]);
-    close (sockList->listSocketsDescriptor[3]);
+	unsigned int i;
+	for (i = 0; i < sockList->currentSize ; ++i) {
+		close (sockList->listSocketsDescriptor[i]);
+	}    
+	
     NB_CLIENTS = 0;
     joueurCourant = 0;
     endgame = 1;
@@ -375,23 +357,23 @@ int compareMots(char* chaine1, char* chaine2) {
 
 
 /*---------------------------------------------------------*/
+// Initialise le mot à trouver.
 char* initMotCourant(){
 
     int longueur = strlen(mot);
     unsigned int i = 0;
     char*copy = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     for (i; i < longueur ; i++ ){
-
        copy[i] = '*';
     }
-    
-  //  printf("copy = %s \n", copy);
+
     return copy;
 
 }
 
 
 /*-----------------------------------------------------*/
+// Méthode déroulant un tour de jeu pour le joueur courant.
 int tourDeJeu(int joueur){
 
     char* rep = askClient(sockList->listSocketsDescriptor[joueur]);
@@ -421,8 +403,6 @@ int tourDeJeu(int joueur){
         // si le mot n'est pas le bon
         }else{
             message = "0\nLe joueur a proposé un mot mais ce n'est pas le bon. Mot proposé : ";
-
-            // addInMatrice(listWordsUsed, rep);
 
             char* name_with_extension;
             name_with_extension = (char*) calloc(strlen(message)+1+strlen(rep),sizeof(char)); /* make space for the new string (should check the return value ...) */
@@ -456,7 +436,7 @@ int tourDeJeu(int joueur){
     } else {
 
         letterInWord = replaceLetter(rep);
-       // printf("motCourant = %s \n", motCourant);
+
 
         // la lettre est bien dans le mot
         if (letterInWord > 0){
@@ -516,8 +496,6 @@ int tourDeJeu(int joueur){
             nextPlayer();
             return 1;
 
-            // free(sendListOfChars);
-
         }
 
     }
@@ -526,6 +504,7 @@ int tourDeJeu(int joueur){
 
 
 /*-----------------------------------------------------*/
+// Méthode de lancement de la partie après l'arrivée des joueurs.
 void *startGame() {
 
     joueurCourant = 0;
@@ -537,13 +516,13 @@ void *startGame() {
     char *rep = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
     char *errorMessage;
 
+	// choix aléatoire d'un mot dans le dictionnaire.
     srand(time(NULL));
     int random = rand()%(19);
-
     mot = dictionnaire[random];
-   // printf("In startGame, Mot = %s \n", mot);
+
     motCourant = initMotCourant();
-   // printf("In startGame, MotCourant = %s \n", motCourant);
+
     message = "0Tout les joueurs sont arrivés, la partie va pouvoir commencer. \n";
     sendMessageAll(message);
     sleep(2);
@@ -553,11 +532,9 @@ void *startGame() {
     strcpy(name_with_extension, message2); /* copy name into the new var */
     strcat(name_with_extension, motCourant); /* add the extension */
 
-   // printf("Message avec extension : %s \n", name_with_extension);
-
     sendMessageAll(name_with_extension);
 
-
+	// Tant que les joueurs n'ont pas trouvé & qu'ils n'ont pas encore perdu.
     while (endgame > 0 && nbErrors < 11 ){
 
         endgame = tourDeJeu(joueurCourant);
@@ -575,45 +552,15 @@ void *startGame() {
 }
 
 
-
-/*-----------------------------------------------------*/
-/*fonction qui permet de recevoir un message d'un socket_descriptor particulier*/
-void * receiveMessageThread(void * socket) {
- int sockfd, ret;
- char buffer[TAILLE_MAX_NOM]; 
- sockfd = (int) socket;
- memset(buffer, 0, TAILLE_MAX_NOM);  
- 
-
-  ret = recvfrom(sockfd, buffer, TAILLE_MAX_NOM, 0, NULL, NULL);  
-  if (ret < 0) {  
-   printf("Error receiving data!\n");    
-  } else {
-  // printf("client: ");
-   //fputs(buffer, stdout);
-  // printf("\n");
-   char *message;
-   message = "0C'est génial :D";
-   sendMessage(message, (int) socket);
-   close ((int ) socket);
-  }
- 
-}
-
-/*-----------------------------------------------------*/
-
-
-
 /*------------------------------------------------------*/
+// Méthode utilisée dans un thread pour accueillir les clients.
 void *traitementClient (void *socket_descriptor) {
      
-    // printf("socket_dexcriptor : %d \n", (int) *socket_descriptor);
-    
-    sockList = addSocketToList(sockList, (int) socket_descriptor);
+	sockList = addSocketToList(sockList, (int) socket_descriptor);
 
     char *message = (char*) calloc (TAILLE_MAX_NOM,sizeof(char));
-   // char *message2 = (char*) malloc (sizeof(char)*TAILLE_MAX_NOM);
-    message = "0Bienvenue dans la partie ! \n";
+
+    message = "0Bienvenue dans la partie ! \nPour gagner, renseignez le mot directement, n'attendez pas que le mot soit totalement découvert!\n";
     sendMessage( message, (int) socket_descriptor); 
 
 }
@@ -692,10 +639,9 @@ exit(1);
   
 
     /*----------------------------------------------------*/
-    // On initialise la SocketList
-    
-    sockList = initSocketList(4);  
-
+    // On initialise la SocketList.    
+    sockList = initSocketList(NB_JOUEURS_MAX);  
+	// On initialise le dictionnaire.
     initDico();
 
     for(;;) {
@@ -711,7 +657,7 @@ exit(1);
            }  
 
         /*Si la partie est pleine, on envoie un message au client*/
-        if (NB_CLIENTS == 4) {
+        if (NB_CLIENTS == NB_JOUEURS_MAX) {
             char gameFull[TAILLE_MAX_NOM] = "Il y a déjà une partie en cours, veuillez essayer un peu plus tard. \n";
             sendMessage(gameFull, nouv_socket_descriptor);
             close(nouv_socket_descriptor);
@@ -724,12 +670,8 @@ exit(1);
             }
 
             NB_CLIENTS += 1;
-          //  printf("NB_CLIENTS = %d \n", NB_CLIENTS);
-         //   printf("Il y %d sur 4 joueurs de connectés.\n", NB_CLIENTS);
-
-            if (NB_CLIENTS == 4) {
-
-          //  printf("start game \n");
+ 
+            if (NB_CLIENTS == NB_JOUEURS_MAX) {
   
              /*lancer la partie quand tout les clients sont arrivés.*/
             //création du thread pour la nouvelle partie
@@ -738,9 +680,7 @@ exit(1);
                    return 1;
                 }
 
-
             }
-
 
         }
 
